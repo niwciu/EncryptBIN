@@ -73,3 +73,13 @@ See [Installation](installation.md) for pre-built binaries and [Usage](usage.md)
 | [Release Signing](release_signing.md) | Windows code-signing certificate setup guide |
 | [Contributing](contributing.md) | Run tests, code style, submitting a pull request |
 | [Troubleshooting](troubleshooting.md) | Common errors and fixes |
+
+
+<br>
+<div align="center">
+
+***
+
+![myEmbeddedWayBanerWhiteSmaller](https://github.com/user-attachments/assets/f4825882-e285-4e02-a75c-68fc86ff5716)
+***
+</div>
