@@ -1,0 +1,179 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  test_and_lint:
+    name: Test and Lint (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libegl-mesa0 \
+          libegl1 \
+          libgl1 \
+          libgl1-mesa-dri \
+          libxrender1 \
+          libxext6 \
+          libxrandr2 \
+          libxi6 \
+          libfontconfig1 \
+          libxcb-glx0 \
+          libxcb-render0 \
+          libxcb-shape0 \
+          libxcb-xfixes0 \
+          libxkbcommon0
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python dependencies
+      run: |
+        python -m venv .venv
+        .venv/bin/pip install --upgrade pip
+        .venv/bin/pip install -e ".[gui,dev]"
+
+    - name: Lint with ruff
+      run: |
+        .venv/bin/ruff check src/ tests/
+
+    - name: Lint with flake8
+      run: |
+        .venv/bin/flake8 src tests
+
+    - name: Type check with mypy
+      run: |
+        .venv/bin/mypy src
+
+    - name: Format check with black
+      run: |
+        .venv/bin/black --check src tests
+
+    - name: Security scan with bandit
+      run: |
+        .venv/bin/bandit -r src/ -ll -x src/encrypt_bin/gui/resources
+
+    - name: Dependency vulnerability scan
+      run: |
+        .venv/bin/pip-audit --skip-editable
+
+    - name: Run tests
+      run: |
+        .venv/bin/pytest --cov=src/encrypt_bin --cov-fail-under=90 tests/
+      env:
+        QT_QPA_PLATFORM: offscreen
+
+
+  build_linux:
+    name: Build Linux Binary
+    runs-on: ubuntu-latest
+    needs: test_and_lint
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libegl-mesa0 \
+          libegl1 \
+          libgl1 \
+          libgl1-mesa-dri \
+          libxrender1 \
+          libxext6 \
+          libxrandr2 \
+          libxi6 \
+          libfontconfig1 \
+          libxcb-glx0 \
+          libxcb-render0 \
+          libxcb-shape0 \
+          libxcb-xfixes0 \
+          libxkbcommon0
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+
+    - name: Install Python dependencies
+      run: |
+        python -m venv .venv
+        .venv/bin/pip install --upgrade pip
+        .venv/bin/pip install -e ".[gui,build]"
+
+    - name: Build Linux binary
+      run: |
+        .venv/bin/pyinstaller \
+          --onefile \
+          --windowed \
+          --name "EncryptBIN" \
+          --paths="src" \
+          --add-data "src/encrypt_bin/gui/resources:resources" \
+          --add-data "src/encrypt_bin/gui/LICENSE:." \
+          src/encrypt_bin/gui/main.py
+
+    - name: Verify Linux binary exists
+      run: |
+        if [ ! -f "dist/EncryptBIN" ]; then
+          echo "::error::Binary file was not created!"
+          ls -la dist/
+          exit 1
+        else
+          echo "Binary file exists:"
+          ls -la dist/EncryptBIN
+          file dist/EncryptBIN
+        fi
+
+
+  build_windows:
+    name: Build Windows Binary
+    runs-on: windows-latest
+    needs: test_and_lint
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+
+    - name: Install Python dependencies
+      run: |
+        python -m venv .venv
+        .venv\Scripts\pip install --upgrade pip
+        .venv\Scripts\pip install -e ".[gui,build]"
+
+    - name: Build Windows binary
+      run: |
+        .venv\Scripts\pyinstaller `
+          --onefile `
+          --noconsole `
+          --name "EncryptBIN" `
+          --paths="src" `
+          --icon="src/encrypt_bin/gui/resources/icons/icon.ico" `
+          --add-data "src/encrypt_bin/gui/resources;resources" `
+          --add-data "src/encrypt_bin/gui/LICENSE;." `
+          src/encrypt_bin/gui/main.py
+
+    - name: Verify Windows binary exists
+      run: |
+        if (!(Test-Path -Path "dist\EncryptBIN.exe")) {
+          Write-Error "Binary file was not created!"
+          Get-ChildItem -Path dist
+          exit 1
+        } else {
+          Write-Output "Binary file exists:"
+          Get-ChildItem -Path dist\EncryptBIN.exe
+        }

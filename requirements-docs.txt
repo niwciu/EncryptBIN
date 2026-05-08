@@ -1,0 +1,5 @@
+# Prefer: pip install -e ".[docs]"
+# This file mirrors the [docs] extra in pyproject.toml for convenience.
+mkdocs>=1.6
+mkdocs-material>=9.5
+pymdown-extensions>=10.0

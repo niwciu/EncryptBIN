@@ -1,0 +1,6 @@
+# Install dependencies for building the standalone GUI binary.
+# This file is kept for reference; the canonical dependency list is in
+# pyproject.toml under the [gui] and [build] extras.
+#
+# Preferred install (from the project root):
+#   pip install -e ".[gui,build]"

@@ -1,0 +1,6 @@
+[flake8]
+max-line-length = 160
+max-complexity = 10
+max-doc-length = 120
+max-lines = 500
+extend-ignore = E203,W503

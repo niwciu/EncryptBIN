@@ -1,0 +1,140 @@
+# ========================
+# Standardowe pliki systemowe
+# ========================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ========================
+# Środowiska wirtualne
+# ========================
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# ========================
+# Kompilacja / artefakty
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ========================
+# Pliki build / dystrybucja
+# ========================
+build/
+out/
+release/
+dist/
+wheels/
+*.egg-info/
+*.egg
+.eggs/
+MANIFEST
+*.manifest
+*.spec
+
+# ========================
+# Testy i raporty
+# ========================
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+htmlcov/
+.coverage
+.coverage.*
+.cache/
+nosetests.xml
+junit*.xml
+
+# ========================
+# Dokumentacja
+# ========================
+docs/_build/
+site/
+*.doctree
+*.log
+
+# ========================
+# Notatniki i dane
+# ========================
+*.ipynb_checkpoints
+*.csv
+*.tsv
+*.dat
+*.tmp
+*.log
+
+# ========================
+# Narzędzia developerskie
+# ========================
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+.pyre-check/
+.cache/
+
+# ========================
+# PyInstaller / aplikacje standalone
+# ========================
+*.manifest
+*.spec
+
+# ========================
+# Editor / IDE
+# ========================
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# ========================
+# Build tools
+# ========================
+pip-wheel-metadata/
+pip-log.txt
+*.pyo
+*.pyd
+
+# ========================
+# Jupyter / eksperymenty
+# ========================
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# ========================
+# Local / secrets
+# ========================
+.envrc
+.secret/
+secrets/
+*.pem
+*.key
+*.crt
+
+# ========================
+# Configi specyficzne dla PyPI / twine
+# ========================
+.pypirc
+*.tar.gz
+*.whl
+
+# ========================
+# install_scripts artefakty
+# ========================
+install_scripts/build/
+install_scripts/dist/
+install_scripts/release/
+install_scripts/out/
+install_scripts/tools/
+install_scripts/*.spec

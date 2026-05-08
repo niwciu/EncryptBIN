@@ -1,0 +1,106 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "encrypt-bin"
+version = "0.1.0"
+description = "Tool for creating and processing binary files for embedded devices"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "niwciu", email = "niwciu@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "pycryptodome>=3.17.0",
+]
+
+[project.optional-dependencies]
+gui = [
+    "PyQt6>=6.0.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "pytest-qt",
+    "flake8",
+    "ruff",
+    "black",
+    "mypy",
+    "bandit[toml]",
+    "pip-audit",
+]
+build = [
+    "pyinstaller",
+]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "pymdown-extensions>=10.0",
+]
+
+[project.scripts]
+encrypt-bin = "encrypt_bin.__main__:main"
+encrypt-bin-gui = "encrypt_bin.gui.main:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"encrypt_bin.gui" = ["resources/icons/*.png", "resources/icons/*.ico", "LICENSE"]
+
+# ---------------------------------------------------------------------------
+# Tool configuration
+# ---------------------------------------------------------------------------
+
+[tool.black]
+line-length = 160
+target-version = ["py310", "py311", "py312", "py313"]
+skip-string-normalization = true
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[tool.ruff]
+line-length = 160
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E203"]
+exclude = [
+    ".git",
+    ".venv",
+    "build",
+    "dist",
+    "__pycache__",
+    "src/encrypt_bin/gui/resources",
+]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_configs = true
+warn_return_any = true
+disallow_untyped_defs = true
+exclude = ["src/encrypt_bin/gui/resources"]
+
+[[tool.mypy.overrides]]
+module = "encrypt_bin.gui.main"
+disallow_untyped_defs = false
+
+[tool.bandit]
+exclude_dirs = ["tests", "src/encrypt_bin/gui/resources"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "--cov=src/encrypt_bin --cov-report=term-missing"
+testpaths = ["tests"]
