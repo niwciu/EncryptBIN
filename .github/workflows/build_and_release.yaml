@@ -171,7 +171,7 @@ jobs:
 
           dpkg-deb --build "$PKG_ROOT" "release/${APP_NAME}-linux-installer.deb"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ubuntu-build
           path: release/*
@@ -233,7 +233,7 @@ jobs:
           choco install innosetup --no-progress -y
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-build
           path: release\*
