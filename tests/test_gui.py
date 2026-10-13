@@ -240,6 +240,45 @@ def test_load_configuration_error_logged(gui, tmp_path):
     assert "Error" in gui.log_text.toPlainText()
 
 
+def test_load_configuration_keeps_parameters_when_paths_are_unavailable(gui, qtbot, tmp_path):
+    """A stale input/output path must not prevent other config fields loading."""
+    config_path = tmp_path / "stale_paths.txt"
+    config_path.write_text(
+        '-i "missing/firmware.bin"\n'
+        '-o "missing/output.bin"\n'
+        '-d 0x00A0000BC22510E1\n'
+        '-b 0x00000001\n'
+        '-k "00 11 22 33 44 55 66 77 88 99 AA BB CC DD EE FF"\n'
+        '-v 0x20260301\n'
+        '-p 0x20260201\n'
+        '-l 1024\n'
+    )
+
+    with patch("encrypt_bin.gui.main.QFileDialog.getOpenFileName", return_value=(str(config_path), "")):
+        with patch("encrypt_bin.gui.main.QMessageBox.warning"):
+            gui.load_configuration()
+
+    assert gui.device_edit.text() == hex(0x00A0000BC22510E1)
+    assert gui.bootloader_edit.text() == hex(1)
+    assert gui.version_edit.text() == hex(0x20260301)
+    assert gui.prev_version_edit.text() == hex(0x20260201)
+    assert gui.page_combo.currentText() == "1024 bytes"
+    assert "Warning:" in gui.log_text.toPlainText()
+
+
+def test_load_configuration_accepts_single_flag(gui, qtbot, tmp_path):
+    """A config may contain only the parameter(s) it is intended to update."""
+    config_path = tmp_path / "partial.txt"
+    config_path.write_text("-v 0x20260401\n")
+
+    with patch("encrypt_bin.gui.main.QFileDialog.getOpenFileName", return_value=(str(config_path), "")):
+        gui.load_configuration()
+
+    assert gui.version_edit.text() == hex(0x20260401)
+    assert gui.device_edit.text() == ""
+    assert gui.log_text.toPlainText().endswith(f"Configuration loaded from {config_path}")
+
+
 def test_load_configuration_with_key_file(gui, qtbot, tmp_path):
     """load_configuration populates key_file_edit when config uses -K."""
     f = tmp_path / "fw.bin"
