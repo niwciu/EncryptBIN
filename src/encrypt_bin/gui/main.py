@@ -412,41 +412,48 @@ class EncryptBinGUI(QMainWindow):
             # reported below without preventing the remaining fields from
             # being restored into the form.
             parsed_args = get_parsed_args(["-c", path], validate_paths=False, allow_partial=True)
-            if parsed_args.input is not None and parsed_args.output is not None:
-                try:
-                    validate_file_paths(parsed_args.input, parsed_args.output)
-                except (ValueError, FileNotFoundError) as e:
-                    self.log_message(f"Warning: {e}")
-                    QMessageBox.warning(self, "Configuration warning", str(e))
-
-            if parsed_args.input is not None:
-                self.input_edit.setText(os.path.basename(parsed_args.input))
-                self.input_edit.setToolTip(parsed_args.input)
-            if parsed_args.output is not None:
-                self.output_edit.setText(os.path.basename(parsed_args.output))
-                self.output_edit.setToolTip(parsed_args.output)
-            if parsed_args.device_id is not None:
-                self.device_edit.setText(hex(parsed_args.device_id))
-            if parsed_args.bootloader_id is not None:
-                self.bootloader_edit.setText(hex(parsed_args.bootloader_id))
-            if getattr(parsed_args, 'key_file', None):
-                self.key_file_edit.setText(parsed_args.key_file)
-                self.hex_key_edit.clear()
-            elif parsed_args.key is not None:
-                key_hex = ' '.join(f'{b:02X}' for b in parsed_args.key)
-                self.hex_key_edit.setText(key_hex)
-                self.key_file_edit.clear()
-            if parsed_args.app_version is not None:
-                self.version_edit.setText(hex(parsed_args.app_version))
-            if parsed_args.prev_app_version is not None:
-                self.prev_version_edit.setText(hex(parsed_args.prev_app_version))
-            if parsed_args.page_size is not None:
-                self.page_combo.setCurrentText(f"{parsed_args.page_size} bytes")
+            self._warn_invalid_configuration_paths(parsed_args)
+            self._apply_configuration(parsed_args)
             self.log_message(f"Configuration loaded from {path}")
 
         except (ValueError, FileNotFoundError, OSError) as e:
             self.log_message(f"Error loading configuration: {e}")
             QMessageBox.critical(self, "Error", f"Failed to load configuration: {e}")
+
+    def _apply_configuration(self, parsed_args):
+        """Apply parsed configuration values to the form."""
+        if parsed_args.input is not None:
+            self.input_edit.setText(os.path.basename(parsed_args.input))
+            self.input_edit.setToolTip(parsed_args.input)
+        if parsed_args.output is not None:
+            self.output_edit.setText(os.path.basename(parsed_args.output))
+            self.output_edit.setToolTip(parsed_args.output)
+        for attribute, widget in (("device_id", self.device_edit), ("bootloader_id", self.bootloader_edit)):
+            value = getattr(parsed_args, attribute)
+            if value is not None:
+                widget.setText(hex(value))
+        if getattr(parsed_args, "key_file", None):
+            self.key_file_edit.setText(parsed_args.key_file)
+            self.hex_key_edit.clear()
+        elif parsed_args.key is not None:
+            self.hex_key_edit.setText(" ".join(f"{byte:02X}" for byte in parsed_args.key))
+            self.key_file_edit.clear()
+        for attribute, widget in (("app_version", self.version_edit), ("prev_app_version", self.prev_version_edit)):
+            value = getattr(parsed_args, attribute)
+            if value is not None:
+                widget.setText(hex(value))
+        if parsed_args.page_size is not None:
+            self.page_combo.setCurrentText(f"{parsed_args.page_size} bytes")
+
+    def _warn_invalid_configuration_paths(self, parsed_args):
+        """Warn about stale paths without blocking configuration loading."""
+        if parsed_args.input is None or parsed_args.output is None:
+            return
+        try:
+            validate_file_paths(parsed_args.input, parsed_args.output)
+        except (ValueError, FileNotFoundError) as e:
+            self.log_message(f"Warning: {e}")
+            QMessageBox.warning(self, "Configuration warning", str(e))
 
 
 def main():
