@@ -143,3 +143,31 @@ Use one of: `Added`, `Changed`, `Fixed`, `Removed`, `Security`. At release time 
 5. Open a pull request against `main` — the PR template will guide you through the checklist.
 
 Keep PRs focused — **one feature or fix per PR**. Include tests for any new behaviour.
+
+## 🚀 Preparing a release
+
+Application releases are created from Git tags by the GitHub Actions workflow in
+`.github/workflows/build_and_release.yaml`. The tag must use the `vMAJOR.MINOR.PATCH`
+format, for example `v0.2.0`.
+
+Before creating a release:
+
+1. Update the version in `pyproject.toml` and `src/encrypt_bin/__init__.py` so they
+   contain the same value without the leading `v` (for example, `0.2.0`).
+2. Add a matching `## v0.2.0 - YYYY-MM-DD` section to `CHANGELOG.md`.
+3. Run `make check` and confirm that all checks pass.
+4. Commit the version and changelog updates, then push the branch.
+5. Create and push the release tag:
+
+   ```bash
+   git tag -a v0.2.0 -m "Release v0.2.0"
+   git push origin v0.2.0
+   ```
+
+Pushing the tag starts the release workflow. It builds the Linux and Windows
+artifacts, extracts the matching changelog section, and publishes a GitHub Release
+with the generated archives. The workflow also checks that the tag exists in the
+changelog before publishing.
+
+The version shown in the GUI's **Help → About** dialog comes from
+`src/encrypt_bin/__init__.py`; update it whenever `pyproject.toml` is updated.

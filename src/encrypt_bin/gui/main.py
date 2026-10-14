@@ -30,6 +30,7 @@ from encrypt_bin.cli.parser import get_parsed_args
 from encrypt_bin.cli.validators import validate_file_paths
 from encrypt_bin.core.config import Config
 from encrypt_bin.core.builder import generate_bin
+from encrypt_bin import __version__
 
 LABEL_WIDTH = 180
 
@@ -205,6 +206,7 @@ class EncryptBinGUI(QMainWindow):
         dlg.setTextFormat(Qt.TextFormat.RichText)
         dlg.setText(
             "<b>Encrypted Bin Creator</b><br><br>"
+            f"Version {__version__}<br><br>"
             "Generates AES-128 CBC encrypted firmware binaries<br>"
             "for the SECURE_BOOTLOADER / SecureLoader ecosystem.<br><br>"
             "<b>Part of the firmware update ecosystem:</b><br>"

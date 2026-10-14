@@ -64,6 +64,21 @@ params_v1.0.txt   →  encrypt-bin -c params_v1.0.txt
 params_v1.1.txt   →  encrypt-bin -c params_v1.1.txt
 ```
 
+## Partial configuration files in the GUI
+
+The GUI can load a configuration containing only the fields you want to update. For
+example, this file updates only the application version:
+
+```
+-v 0x20260401
+```
+
+Values already present in the form are retained for fields absent from the file. The
+GUI also restores valid parameters when an input or output path from the configuration
+no longer exists; it displays a warning so the path can be corrected.
+
+The CLI still requires all mandatory parameters when generating an output file.
+
 ---
 
 ## Notes
