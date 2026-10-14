@@ -44,7 +44,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m venv .venv
-        .venv/bin/pip install --upgrade pip
+        .venv/bin/pip install --upgrade pip "setuptools>=83.0.0"
         .venv/bin/pip install -e ".[gui,dev]"
 
     - name: Lint with ruff
@@ -111,7 +111,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m venv .venv
-        .venv/bin/pip install --upgrade pip
+        .venv/bin/pip install --upgrade pip "setuptools>=83.0.0"
         .venv/bin/pip install -e ".[gui,build]"
 
     - name: Build Linux binary
@@ -152,7 +152,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m venv .venv
-        .venv\Scripts\pip install --upgrade pip
+        .venv\Scripts\pip install --upgrade pip "setuptools>=83.0.0"
         .venv\Scripts\pip install -e ".[gui,build]"
 
     - name: Build Windows binary

@@ -22,7 +22,7 @@ help:
 
 install:
 	python -m venv $(VENV)
-	$(BIN)/pip install --upgrade pip
+	$(BIN)/pip install --upgrade pip "setuptools>=83.0.0"
 	$(BIN)/pip install -e ".[gui,dev]"
 
 lint:
