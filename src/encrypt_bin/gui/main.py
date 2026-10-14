@@ -27,8 +27,10 @@ from pathlib import Path
 from Crypto.Random import get_random_bytes  # nosec B413
 
 from encrypt_bin.cli.parser import get_parsed_args
+from encrypt_bin.cli.validators import validate_file_paths
 from encrypt_bin.core.config import Config
 from encrypt_bin.core.builder import generate_bin
+from encrypt_bin import __version__
 
 LABEL_WIDTH = 180
 
@@ -204,6 +206,7 @@ class EncryptBinGUI(QMainWindow):
         dlg.setTextFormat(Qt.TextFormat.RichText)
         dlg.setText(
             "<b>Encrypted Bin Creator</b><br><br>"
+            f"Version {__version__}<br><br>"
             "Generates AES-128 CBC encrypted firmware binaries<br>"
             "for the SECURE_BOOTLOADER / SecureLoader ecosystem.<br><br>"
             "<b>Part of the firmware update ecosystem:</b><br>"
@@ -406,28 +409,53 @@ class EncryptBinGUI(QMainWindow):
             if not path:
                 return
 
-            parsed_args = get_parsed_args(["-c", path])
-            self.input_edit.setText(os.path.basename(parsed_args.input))
-            self.input_edit.setToolTip(parsed_args.input)
-            self.output_edit.setText(os.path.basename(parsed_args.output))
-            self.output_edit.setToolTip(parsed_args.output)
-            self.device_edit.setText(hex(parsed_args.device_id))
-            self.bootloader_edit.setText(hex(parsed_args.bootloader_id))
-            if getattr(parsed_args, 'key_file', None):
-                self.key_file_edit.setText(parsed_args.key_file)
-                self.hex_key_edit.clear()
-            else:
-                key_hex = ' '.join(f'{b:02X}' for b in parsed_args.key)
-                self.hex_key_edit.setText(key_hex)
-                self.key_file_edit.clear()
-            self.version_edit.setText(hex(parsed_args.app_version))
-            self.prev_version_edit.setText(hex(parsed_args.prev_app_version))
-            self.page_combo.setCurrentText(f"{parsed_args.page_size} bytes")
+            # Load all syntactically valid parameters even when paths from an
+            # older configuration are no longer available.  Path problems are
+            # reported below without preventing the remaining fields from
+            # being restored into the form.
+            parsed_args = get_parsed_args(["-c", path], validate_paths=False, allow_partial=True)
+            self._warn_invalid_configuration_paths(parsed_args)
+            self._apply_configuration(parsed_args)
             self.log_message(f"Configuration loaded from {path}")
 
         except (ValueError, FileNotFoundError, OSError) as e:
             self.log_message(f"Error loading configuration: {e}")
             QMessageBox.critical(self, "Error", f"Failed to load configuration: {e}")
+
+    def _apply_configuration(self, parsed_args):
+        """Apply parsed configuration values to the form."""
+        if parsed_args.input is not None:
+            self.input_edit.setText(os.path.basename(parsed_args.input))
+            self.input_edit.setToolTip(parsed_args.input)
+        if parsed_args.output is not None:
+            self.output_edit.setText(os.path.basename(parsed_args.output))
+            self.output_edit.setToolTip(parsed_args.output)
+        for attribute, widget in (("device_id", self.device_edit), ("bootloader_id", self.bootloader_edit)):
+            value = getattr(parsed_args, attribute)
+            if value is not None:
+                widget.setText(hex(value))
+        if getattr(parsed_args, "key_file", None):
+            self.key_file_edit.setText(parsed_args.key_file)
+            self.hex_key_edit.clear()
+        elif parsed_args.key is not None:
+            self.hex_key_edit.setText(" ".join(f"{byte:02X}" for byte in parsed_args.key))
+            self.key_file_edit.clear()
+        for attribute, widget in (("app_version", self.version_edit), ("prev_app_version", self.prev_version_edit)):
+            value = getattr(parsed_args, attribute)
+            if value is not None:
+                widget.setText(hex(value))
+        if parsed_args.page_size is not None:
+            self.page_combo.setCurrentText(f"{parsed_args.page_size} bytes")
+
+    def _warn_invalid_configuration_paths(self, parsed_args):
+        """Warn about stale paths without blocking configuration loading."""
+        if parsed_args.input is None or parsed_args.output is None:
+            return
+        try:
+            validate_file_paths(parsed_args.input, parsed_args.output)
+        except (ValueError, FileNotFoundError) as e:
+            self.log_message(f"Warning: {e}")
+            QMessageBox.warning(self, "Configuration warning", str(e))
 
 
 def main():

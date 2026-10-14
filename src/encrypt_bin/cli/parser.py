@@ -55,7 +55,38 @@ def merge_args(file_args: list[str], cli_args: list[str]) -> list[str]:
     return merged
 
 
-def get_parsed_args(argv: list[str] | None = None) -> argparse.Namespace:
+def _normalize_args(args: argparse.Namespace, validate_paths: bool) -> argparse.Namespace:
+    """Validate and convert parsed command-line values."""
+    if validate_paths and args.input is not None and args.output is not None:
+        validate_file_paths(args.input, args.output)
+
+    for attribute, label, max_bits in (
+        ("device_id", "Device ID", 64),
+        ("bootloader_id", "Bootloader ID", 32),
+        ("app_version", "App version", 32),
+        ("prev_app_version", "Previous app version", 32),
+    ):
+        value = getattr(args, attribute)
+        if value is not None:
+            setattr(args, attribute, parse_int(value, label, max_bits))
+
+    if args.page_size <= 0:
+        raise ValueError(f"Page size must be a positive integer, got {args.page_size}.")
+    if args.page_size % 16 != 0:
+        raise ValueError(f"Page size must be a multiple of 16 (AES block size), got {args.page_size}.")
+
+    if getattr(args, "key_file", None):
+        args.key = find_key_in_file(args.key_file, args.device_id)
+    elif args.key is not None:
+        args.key = parse_key(args.key)
+    return args
+
+
+def get_parsed_args(
+    argv: list[str] | None = None,
+    validate_paths: bool = True,
+    allow_partial: bool = False,
+) -> argparse.Namespace:
     """Parse and validate all CLI arguments.
 
     Parameters
@@ -101,7 +132,7 @@ def get_parsed_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "-i",
         "--input",
-        required=True,
+        required=not allow_partial,
         metavar="FILE",
         help="Full path to the input .bin file (including filename, e.g. ./input/firmware.bin)",
     )
@@ -109,27 +140,27 @@ def get_parsed_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "-o",
         "--output",
-        required=True,
+        required=not allow_partial,
         metavar="FILE",
         help="Full path for the generated .bin file (e.g. ./output/encrypted.bin)",
     )
     parser.add_argument(
         "-d",
         "--device-id",
-        required=True,
+        required=not allow_partial,
         metavar="ID",
         help="Device ID (uint64, decimal or hex, e.g. 0x0000123412341234)",
     )
     parser.add_argument(
         "-b",
         "--bootloader-id",
-        required=True,
+        required=not allow_partial,
         metavar="ID",
         help="Bootloader ID (uint32, decimal or hex, e.g. 0x00000001)",
     )
 
     # Key group
-    key_group = parser.add_mutually_exclusive_group(required=True)
+    key_group = parser.add_mutually_exclusive_group(required=not allow_partial)
     key_group.add_argument(
         "-k",
         "--key",
@@ -153,14 +184,14 @@ def get_parsed_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "-v",
         "--app-version",
-        required=True,
+        required=not allow_partial,
         metavar="VER",
         help="Application version (uint32, decimal or hex, e.g. 0x20250103)",
     )
     parser.add_argument(
         "-p",
         "--prev-app-version",
-        required=True,
+        required=not allow_partial,
         metavar="VER",
         help="Previous application version (uint32, decimal or hex, e.g. 0x20241231)",
     )
@@ -175,21 +206,4 @@ def get_parsed_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     args = parser.parse_args(merged_args)
 
-    validate_file_paths(args.input, args.output)
-
-    args.device_id = parse_int(args.device_id, "Device ID", 64)
-    args.bootloader_id = parse_int(args.bootloader_id, "Bootloader ID", 32)
-    args.app_version = parse_int(args.app_version, "App version", 32)
-    args.prev_app_version = parse_int(args.prev_app_version, "Previous app version", 32)
-
-    if args.page_size <= 0:
-        raise ValueError(f"Page size must be a positive integer, got {args.page_size}.")
-    if args.page_size % 16 != 0:
-        raise ValueError(f"Page size must be a multiple of 16 (AES block size), got {args.page_size}.")
-
-    if getattr(args, "key_file", None):
-        args.key = find_key_in_file(args.key_file, args.device_id)
-    else:
-        args.key = parse_key(args.key)
-
-    return args
+    return _normalize_args(args, validate_paths)

@@ -69,7 +69,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m venv .venv
-          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install --upgrade pip "setuptools>=83.0.0"
           .venv/bin/pip install -e ".[gui,dev]"
 
       - name: Lint with ruff
@@ -121,7 +121,7 @@ jobs:
         run: |
           python3 -m venv venv
           source venv/bin/activate
-          pip install --upgrade pip
+          pip install --upgrade pip "setuptools>=83.0.0"
           pip install -e ".[gui,build]"
           pyinstaller --onefile --windowed --name "$APP_NAME" --paths="src" \
             --add-data "src/encrypt_bin/gui/resources:resources" \
@@ -171,7 +171,7 @@ jobs:
 
           dpkg-deb --build "$PKG_ROOT" "release/${APP_NAME}-linux-installer.deb"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ubuntu-build
           path: release/*
@@ -194,7 +194,7 @@ jobs:
       - name: Build
         run: |
           python -m venv .venv
-          .venv\Scripts\pip install --upgrade pip
+          .venv\Scripts\pip install --upgrade pip "setuptools>=83.0.0"
           .venv\Scripts\pip install -e ".[gui,build]"
 
           .venv\Scripts\pyinstaller `
@@ -233,7 +233,7 @@ jobs:
           choco install innosetup --no-progress -y
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-build
           path: release\*

@@ -19,7 +19,7 @@ source "$VENV_DIR/bin/activate"
 
 echo ""
 echo "==== [3/5] Installing dependencies ===="
-pip install --upgrade pip
+pip install --upgrade pip "setuptools>=83.0.0"
 pip install -e "../.[gui,build]"
 
 echo ""
